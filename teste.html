@@ -1,0 +1,242 @@
+ <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Estoque - Farmácia Saúde & Vida</title>
+    <link rel="stylesheet" href="teste.css">
+
+    <!-- SDK Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <!-- ===========================
+         Login Page
+    ============================ -->
+    <div class="login-page">
+        <div class="login-container">
+            <h1>Farmácia Saúde & Vida</h1>
+            <h2>Acesso ao Sistema</h2>
+            <form id="login-form">
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" placeholder="Digite seu e-mail" required>
+
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" placeholder="Digite sua senha" required>
+
+                <button type="submit">Entrar</button>
+                <p id="mensagem"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===========================
+         Dashboard Page
+    ============================ -->
+    <div class="container" style="display: none;">
+        <!-- Header / Navegação -->
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">💊</div>
+                    <h1>Farmácia Saúde & Vida - Sistema de Estoque</h1>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="#" class="nav-link active" data-tab="dashboard">Dashboard</a></li>
+                        <li><a href="#" class="nav-link" data-tab="produtos">Produtos</a></li>
+                        <li><a href="#" class="nav-link" data-tab="movimentacoes">Movimentações</a></li>
+                        <li><a href="#" class="nav-link" data-tab="alertas">Alertas</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Conteúdo das Tabs -->
+        <!-- Dashboard -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-cards">
+                <div class="dashboard-card">
+                    <h3>Total de Produtos</h3>
+                    <div class="value" id="total-produtos">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <h3>Produtos em Estoque</h3>
+                    <div class="value" id="produtos-estoque">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <h3>Produtos com Baixo Estoque</h3>
+                    <div class="value" id="baixo-estoque">0</div>
+                </div>
+                <div class="dashboard-card alert">
+                    <h3>Produtos Próximos do Vencimento</h3>
+                    <div class="value" id="proximo-vencimento">0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Produtos com Baixo Estoque</h2>
+                </div>
+                <div id="baixo-estoque-list">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Produtos Próximos do Vencimento</h2>
+                </div>
+                <div id="proximo-vencimento-list">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produtos -->
+        <div id="produtos" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Lista de Produtos</h2>
+                    <button class="btn btn-primary" id="btn-adicionar-produto">Adicionar Produto</button>
+                </div>
+                <div class="tabs">
+                    <div class="tab active" data-categoria="todos">Todos</div>
+                    <div class="tab" data-categoria="Medicamento">Medicamentos</div>
+                    <div class="tab" data-categoria="Dermatológico">Dermatológicos</div>
+                    <div class="tab" data-categoria="Higiene">Higiene</div>
+                </div>
+                <div id="lista-produtos">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movimentações -->
+        <div id="movimentacoes" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Movimentações de Estoque</h2>
+                    <button class="btn btn-primary" id="btn-nova-movimentacao">Nova Movimentação</button>
+                </div>
+                <div id="lista-movimentacoes">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas -->
+        <div id="alertas" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Alertas do Sistema</h2>
+                </div>
+                <div class="alert-section" id="lista-alertas">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===========================
+         Modais
+    ============================ -->
+    <!-- Modal Produto -->
+    <div id="modal-produto" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-produto-titulo">Adicionar Produto</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="form-produto">
+                <input type="hidden" id="produto-id">
+                <div class="form-group">
+                    <label for="produto-nome">Nome do Produto</label>
+                    <input type="text" id="produto-nome" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="produto-categoria">Categoria</label>
+                        <select id="produto-categoria" required>
+                            <option value="">Selecione</option>
+                            <option value="Medicamento">Medicamento</option>
+                            <option value="Dermatológico">Dermatológico</option>
+                            <option value="Higiene">Higiene</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="produto-quantidade">Quantidade</label>
+                        <input type="number" id="produto-quantidade" min="0" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="produto-preco">Preço (R$)</label>
+                        <input type="number" id="produto-preco" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="produto-validade">Data de Validade</label>
+                        <input type="date" id="produto-validade" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="produto-controlado"> 
+                        Produto Controlado
+                    </label>
+                </div>
+                <div class="form-group" style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-produto">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Movimentação -->
+    <div id="modal-movimentacao" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nova Movimentação</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="form-movimentacao">
+                <div class="form-group">
+                    <label for="movimentacao-produto">Produto</label>
+                    <select id="movimentacao-produto" required>
+                        <option value="">Selecione um produto</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="movimentacao-tipo">Tipo</label>
+                        <select id="movimentacao-tipo" required>
+                            <option value="">Selecione</option>
+                            <option value="entrada">Entrada</option>
+                            <option value="saida">Saída</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="movimentacao-quantidade">Quantidade</label>
+                        <input type="number" id="movimentacao-quantidade" min="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="movimentacao-motivo">Motivo</label>
+                    <textarea id="movimentacao-motivo" rows="3"></textarea>
+                </div>
+                <div class="form-group" style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-movimentacao">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="teste.js"></script>
+    <script src="login.js"></script>
+</body>
+</html>

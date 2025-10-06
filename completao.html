@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Estoque - Farmácia Saúde & Vida</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        :root {
+            --primary: #2c7fb8;
+            --secondary: #7fcdbb;
+            --danger: #ed553b;
+            --warning: #f6d55c;
+            --success: #3caea3;
+            --light: #f5f5f5;
+            --dark: #333;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+        
+        .logo-icon {
+            font-size: 2rem;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 20px;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        nav a:hover, nav a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1d6fa5;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #2d9c93;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #db3d24;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: var(--dark);
+        }
+        
+        .btn-warning:hover {
+            background-color: #f4cc3f;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .badge-medicamento {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+        
+        .badge-dermatologico {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .badge-higiene {
+            background-color: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .badge-controlado {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .badge-success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .badge-warning {
+            background-color: #fff8e1;
+            color: #ff8f00;
+        }
+        
+        .badge-danger {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close:hover {
+            color: var(--dark);
+        }
+        
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .dashboard-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .dashboard-card h3 {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .dashboard-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .dashboard-card.alert .value {
+            color: var(--danger);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .alert-section {
+            margin-top: 30px;
+        }
+        
+        .alert-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-left: 4px solid var(--warning);
+            background-color: #fff8e1;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        
+        .alert-item.danger {
+            border-left-color: var(--danger);
+            background-color: #ffebee;
+        }
+        
+        .alert-item.success {
+            border-left-color: var(--success);
+            background-color: #e8f5e9;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            nav ul {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .dashboard-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">💊</div>
+                    <h1>Farmácia Saúde & Vida - Sistema de Estoque</h1>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="#" class="nav-link active" data-tab="dashboard">Dashboard</a></li>
+                        <li><a href="#" class="nav-link" data-tab="produtos">Produtos</a></li>
+                        <li><a href="#" class="nav-link" data-tab="movimentacoes">Movimentações</a></li>
+                        <li><a href="#" class="nav-link" data-tab="alertas">Alertas</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Dashboard -->
+        <div id="dashboard" class="tab-content active">
+            <div class="dashboard-cards">
+                <div class="dashboard-card">
+                    <h3>Total de Produtos</h3>
+                    <div class="value" id="total-produtos">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <h3>Produtos em Estoque</h3>
+                    <div class="value" id="produtos-estoque">0</div>
+                </div>
+                <div class="dashboard-card">
+                    <h3>Produtos com Baixo Estoque</h3>
+                    <div class="value" id="baixo-estoque">0</div>
+                </div>
+                <div class="dashboard-card alert">
+                    <h3>Produtos Próximos do Vencimento</h3>
+                    <div class="value" id="proximo-vencimento">0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Produtos com Baixo Estoque</h2>
+                </div>
+                <div id="baixo-estoque-list">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Produtos Próximos do Vencimento</h2>
+                </div>
+                <div id="proximo-vencimento-list">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produtos -->
+        <div id="produtos" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Lista de Produtos</h2>
+                    <button class="btn btn-primary" id="btn-adicionar-produto">Adicionar Produto</button>
+                </div>
+                <div class="tabs">
+                    <div class="tab active" data-categoria="todos">Todos</div>
+                    <div class="tab" data-categoria="Medicamento">Medicamentos</div>
+                    <div class="tab" data-categoria="Dermatológico">Dermatológicos</div>
+                    <div class="tab" data-categoria="Higiene">Higiene</div>
+                </div>
+                <div id="lista-produtos">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movimentações -->
+        <div id="movimentacoes" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Movimentações de Estoque</h2>
+                    <button class="btn btn-primary" id="btn-nova-movimentacao">Nova Movimentação</button>
+                </div>
+                <div id="lista-movimentacoes">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alertas -->
+        <div id="alertas" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Alertas do Sistema</h2>
+                </div>
+                <div class="alert-section" id="lista-alertas">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Adicionar/Editar Produto -->
+    <div id="modal-produto" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-produto-titulo">Adicionar Produto</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="form-produto">
+                <input type="hidden" id="produto-id">
+                <div class="form-group">
+                    <label for="produto-nome">Nome do Produto</label>
+                    <input type="text" id="produto-nome" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="produto-categoria">Categoria</label>
+                        <select id="produto-categoria" required>
+                            <option value="">Selecione</option>
+                            <option value="Medicamento">Medicamento</option>
+                            <option value="Dermatológico">Dermatológico</option>
+                            <option value="Higiene">Higiene</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="produto-quantidade">Quantidade</label>
+                        <input type="number" id="produto-quantidade" min="0" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="produto-preco">Preço (R$)</label>
+                        <input type="number" id="produto-preco" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="produto-validade">Data de Validade</label>
+                        <input type="date" id="produto-validade" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="produto-controlado"> 
+                        Produto Controlado
+                    </label>
+                </div>
+                <div class="form-group" style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-produto">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Nova Movimentação -->
+    <div id="modal-movimentacao" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nova Movimentação</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="form-movimentacao">
+                <div class="form-group">
+                    <label for="movimentacao-produto">Produto</label>
+                    <select id="movimentacao-produto" required>
+                        <option value="">Selecione um produto</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="movimentacao-tipo">Tipo</label>
+                        <select id="movimentacao-tipo" required>
+                            <option value="">Selecione</option>
+                            <option value="entrada">Entrada</option>
+                            <option value="saida">Saída</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="movimentacao-quantidade">Quantidade</label>
+                        <input type="number" id="movimentacao-quantidade" min="1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="movimentacao-motivo">Motivo</label>
+                    <textarea id="movimentacao-motivo" rows="3"></textarea>
+                </div>
+                <div class="form-group" style="text-align: right; margin-top: 20px;">
+                    <button type="button" class="btn btn-danger" id="btn-cancelar-movimentacao">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+        
